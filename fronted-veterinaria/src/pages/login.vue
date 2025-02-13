@@ -18,6 +18,30 @@ const form = ref({
 
 definePage({ meta: { layout: 'blank' } })
 
+/* start here */
+const login = async () => {
+  try {
+    const response = await $api('/auth/login', {
+      method: 'POST',
+      body: {
+        email: form.value.email,
+        password: form.value.password,
+      },
+      onResponseError: (error) => {
+        console.log(error)
+      },
+    })
+
+    console.log(response)
+  
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+/* ends here */
+
+
 const isPasswordVisible = ref(false)
 const authV2LoginMask = useGenerateImageVariant(authV2LoginMaskLight, authV2LoginMaskDark)
 const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
@@ -76,7 +100,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="() => {}">
+          <VForm @submit.prevent="login()">
             <VRow>
               <!-- email -->
               <VCol cols="12">

@@ -9,7 +9,7 @@ const userProfileList = [
     icon: 'ri-user-line',
     title: 'Profile',
     href: '#',
-  },
+  }, 
   {
     type: 'navItem',
     icon: 'ri-settings-4-line',
@@ -41,6 +41,9 @@ const userProfileList = [
     href: '#',
   },
 ]
+
+const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+
 </script>
 
 <template>
@@ -68,17 +71,17 @@ const userProfileList = [
       >
         <VList>
           <VListItem class="px-4">
-            <div class="d-flex gap-x-2 align-center">
+            <div class="d-flex gap-x-2 align-center" v-if="user">
               <VAvatar>
-                <VImg :src="avatar1" />
+                <VImg :src=" user.avatar ? user.avatar : avatar1" />
               </VAvatar>
 
               <div>
                 <div class="text-body-2 font-weight-medium text-high-emphasis">
-                  John Doe
+                  {{ user.name + ' ' + user.last_name }}
                 </div>
                 <div class="text-capitalize text-caption text-disabled">
-                  Admin
+                  {{ user.role.name }}
                 </div>
               </div>
             </div>

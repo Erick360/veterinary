@@ -1,5 +1,7 @@
 import { setupLayouts } from 'virtual:generated-layouts'
 import { createRouter, createWebHistory } from 'vue-router/auto'
+//import { redirects, routes } from './additional-routes'
+import { setupGuards } from './guards'
 
 function recursiveLayouts(route) {
   if (route.children) {
@@ -21,10 +23,24 @@ const router = createRouter({
     return { top: 0 }
   },
   extendRoutes: pages => [
-    ...[...pages].map(route => recursiveLayouts(route)),
+    ...[{
+      path: '/',
+      name: 'index',
+      redirect: to =>{
+        const userData = localStorage.getItem('user');
+        if(userData)
+          return {name: 'dashboard'}; 
+        return {name: 'login', query: to.query};
+      },
+      }],
+      ...[...pages,...[
+      ].map(route => recursiveLayouts(route)),
   ],
+  
+]
 })
 
+setupGuards(router)
 export { router }
 export default function (app) {
   app.use(router)

@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Models\Role;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -24,6 +25,9 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'last_name',
+        'role_id',
+        'avatar'
     ];
 
     /**
@@ -64,5 +68,9 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function role(){
+        return $this->belongsTo(Role::class, 'role_id');
     }
 }

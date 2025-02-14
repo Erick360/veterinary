@@ -1,4 +1,5 @@
 <script setup>
+import { nextTick, ref } from 'vue';
 import { useGenerateImageVariant } from '@/@core/composable/useGenerateImageVariant'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
@@ -9,6 +10,8 @@ import authV2LoginMaskDark from '@images/pages/auth-v2-login-mask-dark.png'
 import authV2LoginMaskLight from '@images/pages/auth-v2-login-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+import { VAlert } from 'vuetify/components';
+import { useRoute, useRouter } from 'vue-router';
 
 const form = ref({
   email: '',
@@ -16,29 +19,58 @@ const form = ref({
   remember: false,
 })
 
+
+const route = useRoute();
+const router = useRouter();
+const error_exists = ref(null);
+const success_exists = ref(null);
+
+
 definePage({ meta: { layout: 'blank' } })
 
 /* start here */
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const login = async () => {
   try {
-    const response = await $api('/auth/login', {
+    error_exists.value = null;
+    success_exists.value = null;
+    const resp = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      body: {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         email: form.value.email,
         password: form.value.password,
-      },
-      onResponseError: (error) => {
-        console.log(error)
-      },
-    })
+      }),
+    });
 
-    console.log(response)
+    if (!resp.ok) {
+      const response = await resp.json();
+      console.log(response.error);
+      error_exists.value = response.error;
+      return;
+    }
+
+    const data = await resp.json();
+    
+localStorage.setItem('token',resp.access_token);
+localStorage.setItem('user',JSON.stringify(resp.user));
+    //router.push('/dashboard');
+    success_exists.value = true;
+    setTimeout( async () => {
+      await nextTick(() =>{
+      router.replace(route.query.to ? String(route.query.to) : '/');
+    });
+    }, 1500);
   
+
+    console.log(data);
   } catch (error) {
     console.log(error)
   }
-}
-
+};
 /* ends here */
 
 
@@ -124,6 +156,16 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
 
+                <!-- Success Message-->
+                <VAlert type="success" class="my-2" v-if="success_exists">
+                  Authorized  <strong> {{ error_exists }}</strong>
+                  </VAlert>  
+
+                <!-- error message -->
+                <VAlert type="error" class="my-2" v-if="error_exists">
+                    unexpected error <strong> {{ error_exists }}</strong>
+                </VAlert>
+
                 <!-- remember me checkbox -->
                 <div class="d-flex align-center justify-space-between flex-wrap my-6 gap-x-2">
                   <VCheckbox
@@ -147,6 +189,8 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
                   Login
                 </VBtn>
               </VCol>
+
+
 
               <!-- create account -->
               <VCol

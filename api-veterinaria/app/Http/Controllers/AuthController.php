@@ -100,7 +100,11 @@ class AuthController extends Controller
             'expires_in' => auth('api')->factory()->getTTL() * 60,
             'user' => [
                 'name'=> auth('api')->user()->name,
+                'last_name' => auth('api')->user()->last_name,
                 'email' => auth('api')->user()->email,
+                'avatar' => auth('api')->user()->avatar ? env('APP_URL').'Storage/'.auth("api")->user()->avatar,
+                'role' => auth('api')->user()->role
+
             ],
         ]);
     }

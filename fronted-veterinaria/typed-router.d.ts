@@ -23,5 +23,6 @@ declare module 'vue-router/auto-routes' {
     'dashboard': RouteRecordInfo<'dashboard', '/dashboard', Record<never, never>, Record<never, never>>,
     'login': RouteRecordInfo<'login', '/login', Record<never, never>, Record<never, never>>,
     'second-page': RouteRecordInfo<'second-page', '/second-page', Record<never, never>, Record<never, never>>,
+    'third-page': RouteRecordInfo<'third-page', '/third-page', Record<never, never>, Record<never, never>>,
   }
 }

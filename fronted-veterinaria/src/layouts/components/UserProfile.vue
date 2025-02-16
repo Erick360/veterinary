@@ -1,6 +1,7 @@
 <script setup>
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import avatar1 from '@images/avatars/avatar-1.png'
+import { useRoute, useRouter } from 'vue-router';
 
 const userProfileList = [
   { type: 'divider' },
@@ -43,6 +44,24 @@ const userProfileList = [
 ]
 
 const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+/*
+let user = null;
+try {
+  user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+} catch (error) {
+  console.error('Error parsing user data from localStorage:', error);
+  localStorage.removeItem('user');
+}
+*/
+
+const router = useRouter();
+
+const logout = async() =>{
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  
+  await router.push('/login');
+}
 
 </script>
 
@@ -81,7 +100,7 @@ const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('use
                   {{ user.name + ' ' + user.last_name }}
                 </div>
                 <div class="text-capitalize text-caption text-disabled">
-                  {{ user.role.name }}
+                 {{ user.role.name }}
                 </div>
               </div>
             </div>
@@ -128,8 +147,9 @@ const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('use
                 block
                 color="error"
                 size="small"
-                append-icon="ri-logout-box-r-line"
-                :to="{ name: 'login' }"
+                append-icon="ri-logout-box-r-lines"
+                @click="logout"
+                
               >
                 Logout
               </VBtn>

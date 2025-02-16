@@ -26,34 +26,44 @@ const error_exists = ref(null);
 const success_exists = ref(null);
 
 
-definePage({ meta: { layout: 'blank' } })
+definePage({ meta: {
+   layout: 'blank' ,
+   unauthenticatedOnly: true,
+   } 
+  })
 
 /* start here */
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+//const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const login = async () => {
   try {
     error_exists.value = null;
     success_exists.value = null;
-    const resp = await fetch(`${API_URL}/auth/login`, {
+    const resp = await $api('/auth/login', {
       method: 'POST',
-      headers: {
+     
+ /*     headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
+   */
+     body: /*JSON.stringify(*/{
         email: form.value.email,
         password: form.value.password,
-      }),
+      },//),
+      onResponseError({response}){
+        console.log(response._data.error);
+        error_exists.value = response._data.error;
+      }
     });
 
-    if (!resp.ok) {
-      const response = await resp.json();
-      console.log(response.error);
-      error_exists.value = response.error;
-      return;
-    }
+    //if (!resp.ok) {
+      //const response = await resp.json();
+      console.log(resp);
+      //error_exists.value = response.error;
+      //return;
+    //}
 
-    const data = await resp.json();
+    //const data = await resp.json();
     
 localStorage.setItem('token',resp.access_token);
 localStorage.setItem('user',JSON.stringify(resp.user));
@@ -66,7 +76,7 @@ localStorage.setItem('user',JSON.stringify(resp.user));
     }, 1500);
   
 
-    console.log(data);
+    //console.log(data);    
   } catch (error) {
     console.log(error)
   }

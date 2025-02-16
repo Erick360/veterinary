@@ -33,11 +33,8 @@ const router = createRouter({
         return {name: 'login', query: to.query};
       },
       }],
-      ...[...pages,...[
-      ].map(route => recursiveLayouts(route)),
-  ],
-  
-]
+      ...[...pages,...[]].map(route => recursiveLayouts(route)),
+],
 })
 
 setupGuards(router)

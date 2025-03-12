@@ -20,6 +20,8 @@ const LIST_PERMISSIONS = PERMISOS;
 const role = ref(null);
 const permissions = ref([]);
 const warning = ref(false);
+const error_exist = ref(null);
+const success = ref(null);
 
 const addEditPermission = (permiso) => {
   let INDEX = permissions.value.indexOf((perm) => perm == permiso);
@@ -41,7 +43,42 @@ const store = async () => {
     warning.value = "we need to select at least one permission";
     return;
   }
+
+  let data = {
+    name: role.value,
+    permissions: permissions.value,
+  }
+
+  try{
+      const resp = await $api('/role',{
+      method: 'POST',
+      body: data,
+      onResponseError({response}){
+        console.log(response);
+        error_exist.value = response._data.error;
+      }
+    });
+
+    console.log(resp);
+    
+    if(resp.message == 400){
+      warning.value = resp.message_text;
+    }else{
+      success.value = 'Role created successfully';
+    }
+
+    setTimeout(() => {
+      emit("update:isDialogVisible", false);
+    }, 2000);
+
+  }catch(error){
+    console.log(error);
+    error_exist.value = error;
+  }
+  
 };
+
+
 </script>
 
 <template>
@@ -68,10 +105,19 @@ const store = async () => {
         --></div>
 
         <VTextField label="Role:" v-model="role" placeholder="Admin" />
-
+        <!-- Warning message-->
         <VAlert type="warning" class="mt-3" v-if="warning">
           <strong>{{ warning }}</strong>
         </VAlert>
+        <!-- Error message-->
+        <VAlert type="error" class="mt-3" v-if="error_exist">
+          <strong> error to save </strong>
+        </VAlert>
+        <!-- Success message-->
+        <VAlert type="success" class="mt-3" v-if="success">
+          <strong>{{ success }}</strong>
+        </VAlert>
+
       </VCardText>
 
       <VCardText class="pa-5">

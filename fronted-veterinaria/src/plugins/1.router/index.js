@@ -33,12 +33,18 @@ const router = createRouter({
         return {name: 'login', query: to.query};
       },
       }],
-      ...[...pages,...[]].map(route => recursiveLayouts(route)),
+      ...[...pages,...[
+        /*{
+          path: '/roles-permisos',
+          name: 'roles-permisos',
+          component: () => import('@/pages/roles-permisos.vue'),   
+        }*/
+      ]].map(route => recursiveLayouts(route)),
 ],
 })
 
 setupGuards(router)
 export { router }
 export default function (app) {
-  app.use(router)
+  app.use(router) 
 }

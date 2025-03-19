@@ -1,6 +1,6 @@
 <script setup>
 import { PERMISOS } from "@/utils/constants";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { VBtn, VTextField } from "vuetify/components";
 
 const props = defineProps({
@@ -8,6 +8,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  roleSelected: {
+    type: Object,
+    required: true,
+  }
 });
 
 const emit = defineEmits(["update:isDialogVisible","addRole"]);
@@ -22,6 +26,7 @@ const permissions = ref([]);
 const warning = ref(false);
 const error_exist = ref(null);
 const success = ref(null);
+const role_selected = ref(null);
 
 const addEditPermission = (permiso) => {
   let INDEX = permissions.value.indexOf((perm) => perm == permiso);
@@ -50,8 +55,8 @@ const store = async () => {
   }
 
   try{
-      const resp = await $api('/roles',{
-      method: 'POST',
+      const resp = await $api('/roles/'+role_selected.value.id,{
+      method: 'PATCH',
       body: data,
       onResponseError({response}){
         console.log(response);
@@ -64,17 +69,10 @@ const store = async () => {
     if(resp.message == 400){
       warning.value = resp.message_text;
     }else{
-      success.value = 'Role created successfully';
+      success.value = 'Role edit successfully';
+      emit('addRole',true);
     }
 
-    setTimeout(() => {
-      success.value = null;
-      warning.value = null;
-      role.value = null;
-      permissions.value = [];
-      emit("update:isDialogVisible", false);
-      emit("addRole", true);
-    }, 2000);
 
   }catch(error){
     console.log(error);
@@ -83,6 +81,13 @@ const store = async () => {
   
 };
 
+onMounted(() => {
+  //role.value = props.roleSelected.name;
+  role_selected.value = props.roleSelected;
+  permissions.value = props.roleSelected.permissions;
+  role.value = role_selected.value.name;
+  permissions.value = role_selected.value.permissions_puck;
+});
 
 </script>
 
@@ -102,14 +107,27 @@ const store = async () => {
 
       <VCardText class="pa-5">
         <div class="mb-6">
-          <h4 class="text-h4 text-center mb-2">Add Role</h4>
+          <h4 class="text-h4 text-center mb-2" v-if="role_selected">
+            Edit Role{{ role_selected }}
+          </h4>
           <!--
           <p class="text-sm-body-1 text-center">
             Supported payment methods
           </p>
         --></div>
 
+
+        <div class="mb-6">
+          <h4 class="text-h4 text-center mb-2" v-if="role_selected">
+            Edit Role : {{ role_selected.id }}
+          </h4>
+          <!-- <p class="text-sm-body-1 text-center">
+            Supported payment methods
+          </p> -->
+        </div>
+
         <VTextField label="Role:" v-model="role" placeholder="Admin" />
+        
         <!-- Warning message-->
         <VAlert type="warning" class="mt-3" v-if="warning">
           <strong>{{ warning }}</strong>
@@ -126,6 +144,13 @@ const store = async () => {
       </VCardText>
 
       <VCardText class="pa-5">
+        <VBtn 
+        color="primary"
+         class="mb-4"
+          @click="store()"
+          >
+           Edit 
+        </VBtn>
         <VTable>
           <thead>
             <tr>
@@ -137,7 +162,7 @@ const store = async () => {
           <tbody>
             <tr v-for="(item, index) in LIST_PERMISSIONS" :key="index">
               <td>
-                {{ item.name }}
+                {{ item.name }} 
               </td>
               <td>
                 <ul>
@@ -147,6 +172,7 @@ const store = async () => {
                     style="list-style: none"
                   >
                     <VCheckbox
+                    v-model="permissions"
                       :label="permiso.name"
                       :value="permiso.permiso"
                       @click="addEditPermission(permiso.permiso)"
@@ -157,13 +183,6 @@ const store = async () => {
             </tr>
           </tbody>
         </VTable>
-        <VBtn 
-        color="primary"
-         class="my-4"
-          @click="store()"
-          >
-           Create 
-        </VBtn>
       </VCardText>
     </VCard>
   </VDialog>

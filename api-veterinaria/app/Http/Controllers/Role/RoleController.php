@@ -15,14 +15,14 @@ class RoleController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search');
-        $roles = Role::where('name', 'like', "%$search%")->orderBy('id','desc')->get();
+        $roles = Role::where('name', 'ilike', "%".$search."%")->orderBy('id','desc')->get();
         return response()->json([
             "roles" => $roles->map(function($role){
                 return [
                     'id' => $role->id,
                     'name' => $role->name,
                     //'guard_name' => $role->guard_name,
-                    'created_at' => $role->created_at,
+                    'created_at' => $role->created_at->format("Y-m-d h:i:s"),
                     'permissions' => $role->permissions,
                     //'updated_at' => $role->updated_at
                     "permissions_pluck" => $role->permissions->pluck('name'),

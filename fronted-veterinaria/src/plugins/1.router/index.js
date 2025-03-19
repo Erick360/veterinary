@@ -34,11 +34,11 @@ const router = createRouter({
       },
       }],
       ...[...pages,...[
-        /*{
+        {
           path: '/roles-permisos',
           name: 'roles-permisos',
           component: () => import('@/pages/roles-permisos.vue'),   
-        }*/
+        }
       ]].map(route => recursiveLayouts(route)),
 ],
 })

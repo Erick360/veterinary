@@ -1,6 +1,6 @@
 <script setup>
-import { onMounted, ref } from "vue";
-import { VBtn, VTextField } from "vuetify/components";
+import { onMounted, ref, watch } from "vue";
+import { VBtn, VTextField, VAlert } from "vuetify/components"; 
 
 const props = defineProps({
   isDialogVisible: {
@@ -10,15 +10,12 @@ const props = defineProps({
   roleSelected: {
     type: Object,
     required: true,
-  }
+    default: () => ({}), // Default to an empty object
+  },
 });
 
-const emit = defineEmits(["update:isDialogVisible","addRole"]);
 
-const dialogVisibleUpdate = (val) => {
-  emit("update:isDialogVisible", val);
-};
-
+const emit = defineEmits(["update:isDialogVisible", "addRole"]);
 
 
 const warning = ref(false);
@@ -27,35 +24,58 @@ const success = ref(null);
 const role_selected = ref(null);
 
 
-const deleted = async () => {
- 
+const dialogVisibleUpdate = (val) => {
+  emit("update:isDialogVisible", val);
+};
 
-  try{
-      const resp = await $api('/roles/'+role_selected.value.id,{
-      method: 'DELETE',
-      onResponseError({response}){
-        console.log(response);
-        error_exist.value = response._data.error;
-      }
+const deleted = async () => {
+  warning.value = false;
+  error_exist.value = null;
+  success.value = null;
+
+  if (!role_selected.value?.id) {
+    warning.value = "No role selected for deletion.";
+    return;
+  }
+
+  try {
+    const resp = await $api(`/roles/${role_selected.value.id}`, {
+      method: "DELETE",
+      onResponseError({ response }) {
+        console.error("API Error:", response);
+        error_exist.value = response._data.error || "An error occurred while deleting the role.";
+      },
     });
 
     console.log(resp);
-    success.value = 'Role deleted successfully';
-    emit('addRole',true);
-    emit('update:isDialogVisible', false);
-  }catch(error){
-    console.log(error);
-    error_exist.value = error;
+    success.value = "Role deleted successfully.";
+    emit("addRole", true); // Notify parent component
+    emit("update:isDialogVisible", false); // Close the dialog
+  } catch (error) {
+    console.error("Unexpected Error:", error);
+    error_exist.value = "An unexpected error occurred. Please try again.";
   }
-  
 };
 
+
 onMounted(() => {
-  //role.value = props.roleSelected.name;
-  role_selected.value = props.roleSelected;
-  console.log(role_selected.value);
+  if (props.roleSelected) {
+    role_selected.value = props.roleSelected;
+    console.log("Role Selected:", role_selected.value);
+  }
 });
 
+
+watch(
+  () => props.roleSelected,
+  (newVal) => {
+    if (newVal) {
+      role_selected.value = newVal;
+      console.log("Role Selected Updated:", role_selected.value);
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -75,36 +95,32 @@ onMounted(() => {
       <VCardText class="pa-5">
         <div class="mb-6">
           <h4 class="text-h4 text-center mb-2" v-if="role_selected">
-            Edit Role{{ role_selected }}
+            Delete Role {{ role_selected.name }}
           </h4>
-          <!--
-          <p class="text-sm-body-1 text-center">
-            Supported payment methods
-          </p>
-        --></div>
+        </div>
 
-        <p v-if="role_selected">Are you sure that you wanted to delete this role "{{ role_selected.name }}"?</p>
-        <!-- Warning message-->
+        <p v-if="roleSelected">Are you sure to delete {{ role_selected.name }}?</p>
+        <!-- Warning message -->
         <VAlert type="warning" class="mt-3" v-if="warning">
           <strong>{{ warning }}</strong>
         </VAlert>
-        <!-- Error message-->
-        <VAlert type="error" class="mt-3" v-if="error_exist">
-          <strong> error to save </strong>
-        </VAlert>
-       
 
+        <!-- Error message -->
+        <VAlert type="error" class="mt-3" v-if="error_exist">
+          <strong>{{ error_exist }}</strong>
+        </VAlert>
+
+        <!-- Success message -->
+        <VAlert type="success" class="mt-3" v-if="success">
+          <strong>{{ success }}</strong>
+        </VAlert>
       </VCardText>
 
       <VCardText class="pa-5">
-        <VBtn 
-        color="error"
-         class="mb-4"
-          @click="deleted()"
-          >
-            Delete Role
+        <!-- Delete Button -->
+        <VBtn color="error" class="mb-4" @click="deleted">
+          Delete Role
         </VBtn>
-      
       </VCardText>
     </VCard>
   </VDialog>

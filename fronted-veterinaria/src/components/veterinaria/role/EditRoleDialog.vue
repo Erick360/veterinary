@@ -1,8 +1,8 @@
 <script setup>
-import { PERMISOS } from "@/utils/constants";
-import { onMounted, ref } from "vue";
-import { VBtn, VTextField } from "vuetify/components";
 
+import { ref, onMounted, watch } from 'vue';
+
+// Props
 const props = defineProps({
   isDialogVisible: {
     type: Boolean,
@@ -11,83 +11,107 @@ const props = defineProps({
   roleSelected: {
     type: Object,
     required: true,
-  }
+    default: () => ({}), // Default to an empty object
+  },
 });
 
-const emit = defineEmits(["update:isDialogVisible","addRole"]);
+// Emits
+const emit = defineEmits(["update:isDialogVisible", "addRole"]);
 
-const dialogVisibleUpdate = (val) => {
-  emit("update:isDialogVisible", val);
-};
+// Constants
+const LIST_PERMISSIONS = PERMISOS; // Ensure PERMISOS is defined elsewhere
 
-const LIST_PERMISSIONS = PERMISOS;
-const role = ref(null);
+// Refs
+const role = ref('');
 const permissions = ref([]);
-const warning = ref(false);
+const warning = ref(null);
 const error_exist = ref(null);
 const success = ref(null);
 const role_selected = ref(null);
 
-const addEditPermission = (permiso) => {
-  let INDEX = permissions.value.indexOf((perm) => perm == permiso);
-  if (INDEX != -1) {
-    permissions.value.splice(INDEX, 1);
+// Methods
+const dialogVisibleUpdate = (val) => {
+  emit("update:isDialogVisible", val);
+};
+
+const addPermission = (permiso) => {
+  const index = permissions.value.findIndex((perm) => perm === permiso);
+  if (index !== -1) {
+    permissions.value.splice(index, 1); // Remove permission if already selected
   } else {
-    permissions.value.push(permiso);
+    permissions.value.push(permiso); // Add permission if not selected
   }
-  console.log(permissions.value);
+  console.log("Selected Permissions:", permissions.value);
+};
+
+const validateForm = () => {
+  if (!role.value) {
+    warning.value = "Please enter the name of the role.";
+    return false;
+  }
+  if (permissions.value.length === 0) {
+    warning.value = "Please select at least one permission.";
+    return false;
+  }
+  return true;
 };
 
 const store = async () => {
   warning.value = null;
-  if (!role.value) {
-    warning.value = "we need to write the name of the role";
-    return;
-  }
-  if (permissions.value.length == 0) {
-    warning.value = "we need to select at least one permission";
-    return;
-  }
+  error_exist.value = null;
+  success.value = null;
 
-  let data = {
+  if (!validateForm()) return;
+
+  const data = {
     name: role.value,
     permissions: permissions.value,
-  }
+  };
 
-  try{
-      const resp = await $api('/roles/'+role_selected.value.id,{
+  try {
+    const resp = await $api(`/roles/${role_selected.value.id}`, {
       method: 'PATCH',
       body: data,
-      onResponseError({response}){
-        console.log(response);
-        error_exist.value = response._data.error;
-      }
+      onResponseError({ response }) {
+        console.error("API Error:", response);
+        error_exist.value = response._data.error || "An error occurred while updating the role.";
+      },
     });
 
-    console.log(resp);
-    
-    if(resp.message == 400){
-      warning.value = resp.message_text;
-    }else{
-      success.value = 'Role edit successfully';
-      emit('addRole',true);
+    if (resp.message === 400) {
+      warning.value = resp.message_text || "Invalid request.";
+    } else {
+      success.value = 'Role updated successfully.';
+      emit('addRole', true); // Notify parent component
+      dialogVisibleUpdate(false); // Close the dialog
     }
-
-
-  }catch(error){
-    console.log(error);
-    error_exist.value = error;
+  } catch (error) {
+    console.error("Unexpected Error:", error);
+    error_exist.value = "An unexpected error occurred. Please try again.";
   }
-  
 };
 
+// Lifecycle Hooks
 onMounted(() => {
-  //role.value = props.roleSelected.name;
-  role_selected.value = props.roleSelected;
-  permissions.value = props.roleSelected.permissions;
-  role.value = role_selected.value.name;
-  permissions.value = role_selected.value.permissions_puck;
+  if (props.roleSelected) {
+    role_selected.value = props.roleSelected;
+    role.value = role_selected.value.name;
+    permissions.value = role_selected.value.permissions_puck || [];
+  }
 });
+
+// Watcher for roleSelected
+watch(
+  () => props.roleSelected,
+  (newVal) => {
+    if (newVal) {
+      role_selected.value = newVal;
+      role.value = newVal.name;
+      permissions.value = newVal.permissions_puck || [];
+    }
+  },
+  { immediate: true }
+);
 
 </script>
 
@@ -108,48 +132,33 @@ onMounted(() => {
       <VCardText class="pa-5">
         <div class="mb-6">
           <h4 class="text-h4 text-center mb-2" v-if="role_selected">
-            Edit Role{{ role_selected }}
+            Edit Role {{ role_selected.id }}
           </h4>
-          <!--
-          <p class="text-sm-body-1 text-center">
-            Supported payment methods
-          </p>
-        --></div>
-
-
-        <div class="mb-6">
-          <h4 class="text-h4 text-center mb-2" v-if="role_selected">
-            Edit Role : {{ role_selected.id }}
-          </h4>
-          <!-- <p class="text-sm-body-1 text-center">
-            Supported payment methods
-          </p> -->
         </div>
 
         <VTextField label="Role:" v-model="role" placeholder="Admin" />
-        
+
         <!-- Warning message-->
         <VAlert type="warning" class="mt-3" v-if="warning">
           <strong>{{ warning }}</strong>
         </VAlert>
         <!-- Error message-->
         <VAlert type="error" class="mt-3" v-if="error_exist">
-          <strong> error to save </strong>
+          <strong>Error to save</strong>
         </VAlert>
         <!-- Success message-->
         <VAlert type="success" class="mt-3" v-if="success">
           <strong>{{ success }}</strong>
         </VAlert>
-
       </VCardText>
 
       <VCardText class="pa-5">
         <VBtn 
-        color="primary"
-         class="mb-4"
+          color="primary"
+          class="mb-4"
           @click="store()"
-          >
-           Edit 
+        >
+          Edit
         </VBtn>
         <VTable>
           <thead>
@@ -162,7 +171,7 @@ onMounted(() => {
           <tbody>
             <tr v-for="(item, index) in LIST_PERMISSIONS" :key="index">
               <td>
-                {{ item.name }} 
+                {{ item.name }}
               </td>
               <td>
                 <ul>
@@ -172,10 +181,10 @@ onMounted(() => {
                     style="list-style: none"
                   >
                     <VCheckbox
-                    v-model="permissions"
+                      v-model="permissions"
                       :label="permiso.name"
                       :value="permiso.permiso"
-                      @click="addEditPermission(permiso.permiso)"
+                      @click="addPermission(permiso.permiso)"                         
                     />
                   </li>
                 </ul>

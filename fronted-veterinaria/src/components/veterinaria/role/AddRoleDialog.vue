@@ -23,8 +23,8 @@ const warning = ref(false);
 const error_exist = ref(null);
 const success = ref(null);
 
-const addEditPermission = (permiso) => {
-  let INDEX = permissions.value.indexOf((perm) => perm == permiso);
+const addPermission = (permiso) => {
+  let INDEX = permissions.value.findIndex((perm) => perm == permiso);
   if (INDEX != -1) {
     permissions.value.splice(INDEX, 1);
   } else {
@@ -149,7 +149,7 @@ const store = async () => {
                     <VCheckbox
                       :label="permiso.name"
                       :value="permiso.permiso"
-                      @click="addEditPermission(permiso.permiso)"
+                      @click="addPermission(permiso.permiso)"
                     />
                   </li>
                 </ul>
